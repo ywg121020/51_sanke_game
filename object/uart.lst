@@ -1,0 +1,139 @@
+C51 COMPILER V9.00   UART                                                                  09/19/2016 08:58:16 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN ..\output\uart.obj
+COMPILER INVOKED BY: C:\Keil_v4\C51\BIN\C51.EXE ..\src\uart.c LARGE BROWSE INCDIR(..\..\9.15;..\src;..\user) DEBUG OBJEC
+                    -TEXTEND PRINT(.\uart.lst) OBJECT(..\output\uart.obj)
+
+line level    source
+
+   1          #include <config.h>
+   2          
+   3          sbit PIN_RXD = P3^0; //½ÓÊÕÒý½Å¶¨Òå
+   4          sbit PIN_TXD = P3^1; //·¢ËÍÒý½Å¶¨Òå
+   5          bit RxdOrTxd = 0; //Ö¸Ê¾µ±Ç°×´Ì¬Îª½ÓÊÕ»¹ÊÇ·¢ËÍ
+   6          bit RxdEnd = 0; //½ÓÊÕ½áÊø±êÖ¾
+   7          bit TxdEnd = 0; //·¢ËÍ½áÊø±êÖ¾
+   8          
+   9          unsigned char RxdBuf = 0; //½ÓÊÕ»º³åÆ÷
+  10          unsigned char TxdBuf = 0; //·¢ËÍ»º³åÆ÷
+  11          void ConfigUART(unsigned int baud);
+  12          void StartTXD(unsigned char dat);
+  13          void StartRXD();
+  14          
+  15          void Send()
+  16          {
+  17   1              EA = 1; //¿ª×ÜÖÐ¶Ï
+  18   1              ConfigUART(9600); //ÅäÖÃ²¨ÌØÂÊÎª 9600
+  19   1              while (1)
+  20   1              {
+  21   2                      while (PIN_RXD); //µÈ´ý½ÓÊÕÒý½Å³öÏÖµÍµçÆ½£¬¼´ÆðÊ¼Î»
+  22   2                      StartRXD(); //Æô¶¯½ÓÊÕ
+  23   2                      while (!RxdEnd); //µÈ´ý½ÓÊÕÍê³É
+  24   2                      StartTXD(RxdBuf+1); //½ÓÊÕµ½µÄÊý¾Ý+1 ºó£¬·¢ËÍ»ØÈ¥
+  25   2                      while (!TxdEnd); //µÈ´ý·¢ËÍÍê³É
+  26   2              }
+  27   1      }
+  28          /* ´®¿ÚÅäÖÃº¯Êý£¬ baud-Í¨ÐÅ²¨ÌØÂÊ */
+  29          void ConfigUART(unsigned int baud)
+  30          {
+  31   1              TMOD &= 0xF0; //ÇåÁã T0 µÄ¿ØÖÆÎ»
+  32   1              TMOD |= 0x02; //ÅäÖÃ T0 ÎªÄ£Ê½ 2
+  33   1              TH0 = 256 - (11059200/12)/baud; //¼ÆËã T0 ÖØÔØÖµ
+  34   1      }
+  35          
+  36          void StartRXD()
+  37          {
+  38   1              TL0 = 256 - ((256-TH0)>>1); //½ÓÊÕÆô¶¯Ê±µÄ T0 ¶¨Ê±Îª°ë¸ö²¨ÌØÂÊÖÜÆÚ
+  39   1              ET0 = 1; //Ê¹ÄÜ T0 ÖÐ¶Ï
+  40   1              TR0 = 1; //Æô¶¯ T0
+  41   1              RxdEnd = 0; //ÇåÁã½ÓÊÕ½áÊø±êÖ¾
+  42   1              RxdOrTxd = 0; //ÉèÖÃµ±Ç°×´Ì¬Îª½ÓÊÕ
+  43   1      }
+  44          /* Æô¶¯´®ÐÐ·¢ËÍ£¬ dat-´ý·¢ËÍ×Ö½ÚÊý¾Ý */
+  45          void StartTXD(unsigned char dat)
+  46          {
+  47   1              TxdBuf = dat; //´ý·¢ËÍÊý¾Ý±£´æµ½·¢ËÍ»º³åÆ÷
+  48   1              TL0 = TH0; //T0 ¼ÆÊý³õÖµÎªÖØÔØÖµ
+  49   1              ET0 = 1; //Ê¹ÄÜ T0 ÖÐ¶Ï
+  50   1              TR0 = 1; //Æô¶¯ T0
+  51   1              PIN_TXD = 0; //·¢ËÍÆðÊ¼Î»
+  52   1              TxdEnd = 0; //ÇåÁã·¢ËÍ½áÊø±êÖ¾
+  53   1              RxdOrTxd = 1; //ÉèÖÃµ±Ç°×´Ì¬Îª·¢ËÍ
+  54   1      }
+C51 COMPILER V9.00   UART                                                                  09/19/2016 08:58:16 PAGE 2   
+
+  55          /* T0 ÖÐ¶Ï·þÎñº¯Êý£¬´¦Àí´®ÐÐ·¢ËÍºÍ½ÓÊÕ */
+  56          void InterruptTimer0() interrupt 1
+  57          {
+  58   1              static unsigned char cnt = 0; //Î»½ÓÊÕ»ò·¢ËÍ¼ÆÊý
+  59   1              if (RxdOrTxd) //´®ÐÐ·¢ËÍ´¦Àí
+  60   1              {
+  61   2                      cnt++;
+  62   2                      if (cnt <= 8) //µÍÎ»ÔÚÏÈÒÀ´Î·¢ËÍ 8bit Êý¾ÝÎ»
+  63   2                      {
+  64   3                              PIN_TXD = TxdBuf & 0x01;
+  65   3                              TxdBuf >>= 1;
+  66   3                      }
+  67   2                      else if (cnt == 9) //·¢ËÍÍ£Ö¹Î»
+  68   2                      {
+  69   3                              PIN_TXD = 1;
+  70   3                      }
+  71   2                      else //·¢ËÍ½áÊø
+  72   2                      {
+  73   3                              cnt = 0; //¸´Î» bit ¼ÆÊýÆ÷
+  74   3                              TR0 = 0; //¹Ø±Õ T0
+  75   3                              TxdEnd = 1; //ÖÃ·¢ËÍ½áÊø±ê¾
+  76   3                      }
+  77   2              }
+  78   1              else
+  79   1              {
+  80   2                      if (cnt == 0) //´¦ÀíÆðÊ¼Î»
+  81   2                      {
+  82   3                              if (!PIN_RXD) //ÆðÊ¼Î»Îª 0 Ê±£¬ÇåÁã½ÓÊÕ»º³åÆ÷£¬×¼±¸½ÓÊÕÊý¾ÝÎ»
+  83   3                              {
+  84   4                                      RxdBuf = 0;
+  85   4                                      cnt++;
+  86   4                              }
+  87   3                              else //ÆðÊ¼Î»²»Îª 0 Ê±£¬ÖÐÖ¹½ÓÊÕ
+  88   3                              {
+  89   4                                      TR0 = 0; //¹Ø±Õ T0
+  90   4                              }
+  91   3                      }
+  92   2                      else if (cnt <= 8) //´¦Àí 8 Î»Êý¾ÝÎ»
+  93   2                      {
+  94   3                              RxdBuf >>= 1; //µÍÎ»ÔÚÏÈ£¬ËùÒÔ½«Ö®Ç°½ÓÊÕµÄÎ»ÏòÓÒÒÆ
+  95   3                              if (PIN_RXD) //½ÓÊÕ½ÅÎª 1 Ê±£¬»º³åÆ÷×î¸ßÎ»ÖÃ 1£¬
+  96   3                              { 
+  97   4                                      RxdBuf |= 0x80;
+  98   4                              }
+  99   3                              cnt++;
+ 100   3                      }
+ 101   2                      else //Í£Ö¹Î»´¦Àí
+ 102   2                      {
+ 103   3                              cnt = 0; //¸´Î» bit ¼ÆÊýÆ÷
+ 104   3                              TR0 = 0; //¹Ø±Õ T0
+ 105   3                              if (PIN_RXD) //Í£Ö¹Î»Îª 1 Ê±£¬·½ÄÜÈÏÎªÊý¾ÝÓÐÐ§
+ 106   3                              {
+ 107   4                                      RxdEnd = 1; //ÖÃ½ÓÊÕ½áÊø±êÖ¾
+ 108   4                              }
+ 109   3                      }
+ 110   2              }
+ 111   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    241    ----
+   CONSTANT SIZE    =   ----    ----
+C51 COMPILER V9.00   UART                                                                  09/19/2016 08:58:16 PAGE 3   
+
+   XDATA SIZE       =      3    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      3    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

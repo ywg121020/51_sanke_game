@@ -1,0 +1,1 @@
+"..\src\12864.c" BROWSE DEBUG OBJECTEXTEND PRINT(.\12864.lst) OBJECT(..\output\12864.obj)

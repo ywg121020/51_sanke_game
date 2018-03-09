@@ -1,0 +1,9 @@
+"..\output\main.obj",
+"..\output\display.obj",
+"..\output\snake.obj",
+"..\output\random.obj",
+"..\output\lcd12864.obj",
+"..\output\delay.obj",
+"..\output\key.obj" 
+TO "..\output\game" 
+PRINT(".\game.m51") RAMSIZE(256) 

@@ -1,0 +1,564 @@
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE SNAKE
+OBJECT MODULE PLACED IN ..\output\snake.obj
+COMPILER INVOKED BY: C:\Keil_v4\C51\BIN\C51.EXE ..\user\snake.c LARGE BROWSE INCDIR(..\src;..\..\9.22最终完成;..\user;..
+                    -\object;..\output) DEBUG OBJECTEXTEND PRINT(.\snake.lst) OBJECT(..\output\snake.obj)
+
+line level    source
+
+   1          #include <config.h>
+   2          sbit LED = P1^0; //1熄灭，0显示
+   3          struct snake{
+   4                  uchar X[25];
+   5                  uchar Y[25];
+   6                  uchar Node;
+   7                  uchar Direction;
+   8                  uchar Blood;
+   9                  uchar Life;
+  10                  uchar Score;
+  11                  uchar Rank;
+  12                  uchar Dif;
+  13                  
+  14          }Snake;
+  15            
+  16          struct barrier{
+  17             uchar X[52];
+  18             uchar Y[52];
+  19             uchar Num;
+  20          }Barrier;
+  21          
+  22          struct food{
+  23                  uchar X;
+  24                  uchar Y;
+  25                  uchar Eat;
+  26          }Food;
+  27          
+  28          struct buf{
+  29                  char X_Move;
+  30                  char Y_Move;
+  31          }Buf;
+  32          
+  33          struct life{
+  34                  uchar X[6];
+  35                  uchar Y[6];
+  36                  uchar Num;
+  37          }Life;
+  38          
+  39          uchar code Lin_Word[]={0x00,0xDC,0x98,0x98,0xFC,0xDF,0xFC,0xFE,0xBB,0xDC,0x98,0x00,0x00,0x01,0x01,0x07,0x0
+             -7,0x01,0x03,0x07,0x0D,0x01,0x01,0x00};/*"林",0*/
+  40          uchar code A_Word[]={0x04,0x04,0x0C,0x0A,0x0A,0x1E,0x12,0x33};/*"A",0*/
+  41          uchar code B_Word[]={0x0F,0x12,0x12,0x0E,0x12,0x12,0x12,0x0F};/*"B",0*//*"B",0*/
+  42          
+  43          uchar code S_Word[]={0x1E,0x11,0x01,0x06,0x08,0x10,0x11,0x0F};/*"S",0*/
+  44          uchar code T_Word[]={0x1F,0x15,0x04,0x04,0x04,0x04,0x04,0x0E};/*"T",0*/
+  45          uchar code R_Word[]={0x0F,0x12,0x12,0x0E,0x0A,0x12,0x12,0x37};/*"R",0*/
+  46          uchar code C_Word[]={0x1E,0x11,0x01,0x01,0x01,0x01,0x11,0x0E};/*"C",0*/
+  47          uchar code K_Word[]={0x37,0x12,0x0A,0x06,0x0A,0x12,0x12,0x37};/*"K",0*/
+  48          
+  49          
+  50          uchar Most_Score=0;
+  51          uchar  Step = 1;
+  52          uchar Timer0_100ms=0;
+  53          uchar Timer1_1s=0;
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 2   
+
+  54          uchar Timer1_s=0;
+  55          uchar Flag_Refresh=0;
+  56          uchar Flag_Medicine=0;
+  57          uchar Flag_1s=0;
+  58          uchar Speed=20;
+  59          uchar Key_Buffer=4;
+  60          /*********************************
+  61          初始化定时器
+  62          **********************************/
+  63          void InitTimer(void)
+  64          {
+  65   1              TMOD = 0x11; 
+  66   1              TH0=0x7D;         //定时器0   20ms中断 
+  67   1              TL0=0xCB;
+  68   1              TH1 = 0;          //定时器1   40ms中断  
+  69   1              TL1 = 0;        
+  70   1              ET0=1;
+  71   1              ET1 = 1;        
+  72   1              TR0=1;          
+  73   1              TR1=1;  
+  74   1              PT0=1;
+  75   1              EA=1;  
+  76   1      }
+  77          
+  78          
+  79          void Barrier_Refresh()
+  80          {        
+  81   1               Barrier.X[Barrier.Num]=Random()*79;
+  82   1               Barrier.Y[Barrier.Num]=Random()*62+1;
+  83   1               while(Barrier.X[Barrier.Num] ==Food.X)
+  84   1               {Barrier.X[Barrier.Num]=Random()*79;   }        //Random()的范围在0-1之间       
+  85   1               while(Barrier.Y[Barrier.Num] ==Food.Y)
+  86   1               {Barrier.Y[Barrier.Num]=Random()*62+1; }               
+  87   1               Lcd_PutPixel( Barrier.X[Barrier.Num], Barrier.Y[Barrier.Num],0);
+  88   1               Barrier.Num++;
+  89   1      }
+  90          /************************************
+  91          定时器0 中断服务函数
+  92          按键刷新
+  93          ************************************/
+  94          void T0_time()interrupt 1
+  95          {       
+  96   1              TH0=0x7D;         //定时器0   20ms中断 
+  97   1              TL0=0xCB;
+  98   1              Timer0_100ms++;
+  99   1              if(Timer0_100ms == 3)
+ 100   1              {
+ 101   2                      Timer0_100ms = 0;
+ 102   2                      switch(Key_Scan())
+ 103   2                      {
+ 104   3                         case 1 :     {       if(Snake.Direction == 2         ) {break;}else{Key_Buffer =  1; }       break;  }
+ 105   3                         case 2 : {   if(Snake.Direction == 1         ) {break;}else{Key_Buffer =  2;         }       break;  }
+ 106   3                         case 3 : {   if(Snake.Direction == 4         ) {break;}else{Key_Buffer =  3;         }       break;  }
+ 107   3                         case 4 : {   if(Snake.Direction == 3         ) {break;}else{Key_Buffer =  4; }       break;  }
+ 108   3                         case 5 : Key_Buffer =  5;break;      
+ 109   3                         case 6 : Key_Buffer =  6;break;      
+ 110   3                         default : break;
+ 111   3                      }               
+ 112   2              }
+ 113   1      }
+ 114          /************************************
+ 115          定时器1 中断服务函数
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 3   
+
+ 116          游戏刷新定时
+ 117          ************************************/
+ 118          void T1_timer()interrupt 3
+ 119          {
+ 120   1              TH1 = 0;          //定时器1   40ms中断  
+ 121   1              TL1 = 0;
+ 122   1              Timer1_1s++;
+ 123   1              if(Timer1_1s==25)
+ 124   1              {
+ 125   2                      Timer1_1s=0;
+ 126   2                      Flag_1s =1;
+ 127   2              
+ 128   2              }       
+ 129   1              Timer1_s ++;
+ 130   1              if(Timer1_s == Speed)
+ 131   1              {
+ 132   2                      Timer1_s =0;
+ 133   2                      Flag_Refresh = 1;
+ 134   2              }
+ 135   1      }
+ 136          /***********************************
+ 137          函数作用：游戏结束
+ 138          ***********************************/
+ 139          void GameOver()
+ 140          {
+ 141   1               Lcd_Reset();
+ 142   1               Lcd_Clear(1);
+ 143   1               Lcd_WriteStr(2,0,"游戏结束");
+ 144   1               if(Snake.Score>Most_Score)
+ 145   1               {
+ 146   2      
+ 147   2                         Most_Score= Snake.Score;
+ 148   2      
+ 149   2               }
+ 150   1               Lcd_WriteStr(1,2,"当前分：");
+ 151   1          DisPlayNums (80,40,Snake.Score);
+ 152   1              Lcd_WriteStr(1,3,"最高分：");
+ 153   1          DisPlayNums (80,56,Most_Score);
+ 154   1               while(1)
+ 155   1               {
+ 156   2                       Step = 1;
+ 157   2                       if(Key_Buffer == 5)
+ 158   2                       {                                                 
+ 159   3                                 break;
+ 160   3                       }
+ 161   2               
+ 162   2               }         
+ 163   1      }
+ 164          /***********************************
+ 165          蛇头蛇身接触，结束游戏
+ 166          ***********************************/
+ 167          uchar Kill_Self(char n,uchar Temp1[],uchar Temp2[])
+ 168          {
+ 169   1              uchar i;
+ 170   1              uchar Flag=0;
+ 171   1              for(i = 1;i < Snake.Node - 1;i++)
+ 172   1              {
+ 173   2                      if(Temp1[i] == Temp1[0]+n && Temp2[i] == Temp2[0])
+ 174   2                      {
+ 175   3                              return 0;
+ 176   3                      }                                                                                                                                                        
+ 177   2              }
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 4   
+
+ 178   1              return 1;
+ 179   1      }
+ 180          /****************************************
+ 181          食物刷新
+ 182          ****************************************/
+ 183          void Food_Refresh()
+ 184          {
+ 185   1               uchar i;
+ 186   1               while(1)
+ 187   1               {
+ 188   2                       
+ 189   2                       Food.X=Random()*79;     //Random()的范围在0-1之间       
+ 190   2                       while(Food.X % 3 != 0)
+ 191   2                       {
+ 192   3                              Food.X=Random()*79;      //Random()的范围在0-1之间              
+ 193   3                       }
+ 194   2                       Food.Y=Random()*62+1;
+ 195   2                       while((Food.Y-1)%3 !=0)
+ 196   2                       {
+ 197   3                               Food.Y=Random()*62+1;
+ 198   3                       }
+ 199   2                       for(i=0;i<Snake.Node;i++)
+ 200   2                       {
+ 201   3                              if(Food.X+1 == Snake.X[i]&&Food.Y == Snake.Y[i])
+ 202   3                              {
+ 203   4                                break;
+ 204   4                              }
+ 205   3                       }
+ 206   2                       if(i == Snake.Node)
+ 207   2                       {
+ 208   3                              break;
+ 209   3                       }
+ 210   2               }
+ 211   1               Lcd_Rectangle(Food.X,Food.Y-1,Food.X+2,Food.Y+1,0);
+ 212   1      }
+ 213          
+ 214          void Life_Refresh()
+ 215          {
+ 216   1               Life.X[Life.Num]=Random()*79;
+ 217   1               Life.Y[Life.Num]=Random()*63;
+ 218   1               LED=~LED;
+ 219   1              //Random()的范围在0-1之间        
+ 220   1              while((Life.X[Life.Num]-1) % 3 != 0)
+ 221   1              {
+ 222   2                      Life.X[Life.Num]=Random()*79;    //Random()的范围在0-1之间              
+ 223   2              }
+ 224   1              while((Life.Y[Life.Num]-1) % 3 !=0)
+ 225   1              {
+ 226   2                      Life.Y[Life.Num]=Random()*63;
+ 227   2               }
+ 228   1              ShiZi_Display(Life.X[Life.Num],Life.Y[Life.Num],0);
+ 229   1              Life.Num++; 
+ 230   1      }
+ 231          
+ 232          
+ 233          /*******************************
+ 234          数据刷新
+ 235          *******************************/
+ 236          void Data_Refresh()
+ 237          {
+ 238   1                      DisPlayNums(110,5,Snake.Score);
+ 239   1                      DisPlayNums(110,18,Snake.Rank);
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 5   
+
+ 240   1                      DisPlayNums(110,31,Snake.Dif);
+ 241   1                      DisPlayNums(110,44,Snake.Blood);
+ 242   1      }
+ 243          /********************************
+ 244          难度设置
+ 245          *********************************/
+ 246          void Dif_Refresh()
+ 247          {
+ 248   1              Snake.Dif=Snake.Score/5;
+ 249   1              if(Snake.Rank <2)
+ 250   1              {
+ 251   2                      if(Snake.Dif < 1)       {Speed =5;}
+ 252   2                      if(Snake.Dif >=1 )      {Speed =1;}
+ 253   2              }
+ 254   1              else
+ 255   1              {
+ 256   2                  if(Snake.Dif < 3)   {Speed =5;}
+ 257   2                      if(Snake.Dif >=3)       {Speed =1;}             
+ 258   2              }
+ 259   1      }
+ 260          
+ 261          
+ 262          
+ 263          
+ 264          void  Game2_Start()
+ 265          {
+ 266   1              uchar i;
+ 267   1              if(Snake.Score >=10)
+ 268   1              {
+ 269   2                      if(Flag_Medicine == 0)
+ 270   2                      {
+ 271   3                              for(i=0;i <= Barrier.Num;i++)
+ 272   3                              {
+ 273   4                                      if(Barrier.Y[i]>=(Snake.Y[0]-1)&&Barrier.Y[i]<=(Snake.Y[0]+1)&&Barrier.X[i]>=(Snake.X[0]-1)&&Barrier.X
+             -[i]<=(Snake.X[0]+1))                          
+ 274   4                                      {
+ 275   5                                               Barrier.Y[i]=86;
+ 276   5                                               Barrier.X[i]=80;
+ 277   5                                               Snake.Blood--;
+ 278   5                                               break;
+ 279   5                                      }
+ 280   4                              }
+ 281   3                      }
+ 282   2                      Snake.Rank=2;
+ 283   2              }
+ 284   1      }
+ 285          
+ 286          
+ 287          
+ 288          
+ 289          
+ 290          
+ 291          
+ 292          
+ 293          
+ 294                  
+ 295          
+ 296          
+ 297          void Game1_Start()
+ 298          {
+ 299   1                uchar i;        
+ 300   1                Flag_Refresh = 0;
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 6   
+
+ 301   1                Food_Refresh();
+ 302   1                Food.Eat=1;
+ 303   1                Snake.X[0]=16;
+ 304   1                Snake.Y[0]=1;
+ 305   1                Snake.X[1]=13;
+ 306   1                Snake.Y[1]=1;
+ 307   1                Snake.X[2]=10;
+ 308   1                Snake.Y[2]=1;
+ 309   1                Snake.X[3]=7;
+ 310   1                Snake.Y[3]=1;
+ 311   1                Snake.X[4]=4;
+ 312   1                Snake.Y[4]=1;
+ 313   1                Snake.Node = 5;
+ 314   1                Snake.Direction = 4;
+ 315   1                Snake.Life  = 1;
+ 316   1                Snake.Blood  = 3;
+ 317   1                Snake.Score = 0;
+ 318   1                Snake.Rank  = 1;
+ 319   1                Snake.Dif   = 1;
+ 320   1                Barrier.Num=0;
+ 321   1                Life.Num=0;             
+ 322   1                Data_Refresh();
+ 323   1                Lcd_Rectangle(Snake.X[0]-1,Snake.Y[0]-1,Snake.X[0]+1,Snake.Y[0]+1,0);
+ 324   1            Lcd_Rectangle(Snake.X[1]-1,Snake.Y[1]-1,Snake.X[1]+1,Snake.Y[1]+1,0);
+ 325   1                Lcd_Rectangle(Snake.X[2]-1,Snake.Y[2]-1,Snake.X[2]+1,Snake.Y[2]+1,0);
+ 326   1            Lcd_Rectangle(Snake.X[3]-1,Snake.Y[3]-1,Snake.X[3]+1,Snake.Y[3]+1,0);
+ 327   1                Lcd_Rectangle(Snake.X[4]-1,Snake.Y[4]-1,Snake.X[4]+1,Snake.Y[4]+1,0);
+ 328   1                Delaynms(1000);
+ 329   1                Key_Buffer = 4;
+ 330   1                while(Step == 2)
+ 331   1                {
+ 332   2                        if(Flag_Refresh == 1 )
+ 333   2                        {                                                      
+ 334   3                                      Flag_Refresh=0;                 
+ 335   3                                      if(     Snake.Score == 20)
+ 336   3                                      {
+ 337   4                                              Lcd_Reset();
+ 338   4                                          Lcd_Clear(1);
+ 339   4                                              Lcd_WriteStr(0,0,"！不敢相信赢了！");
+ 340   4                                              Lcd_WriteStr(1,1,"！你太牛了！");
+ 341   4                                              Lcd_WriteStr(0,2,"！英雄留下名字！");
+ 342   4                                               while(1)
+ 343   4                                               {
+ 344   5                                                      Step = 1;
+ 345   5                                                      if(Key_Buffer == 5)
+ 346   5                                                      {                                                                                  
+ 347   6                                                              break;
+ 348   6                                                      }                                                
+ 349   5                                              }
+ 350   4                                      }
+ 351   3                                      
+ 352   3                                      
+ 353   3                                      
+ 354   3                                      if(Key_Buffer == 6)
+ 355   3                                      {
+ 356   4                                               while(1)
+ 357   4                                               {
+ 358   5                                                      if(Key_Buffer == 5)
+ 359   5                                                      {                                                                                                                       
+ 360   6                                                              Flag_Refresh=0;         
+ 361   6                                                              break;
+ 362   6                                                      }
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 7   
+
+ 363   5                                               }
+ 364   4                                               Flag_Refresh=0;
+ 365   4                                      }
+ 366   3      
+ 367   3                                      if(Key_Buffer!=5 && Key_Buffer!=6)
+ 368   3                                      {
+ 369   4                                              Snake.Direction=Key_Buffer;
+ 370   4                                      }                                                                                               
+ 371   3                                      //判断食物是否还存在                            
+ 372   3                                      Dif_Refresh();                          
+ 373   3                                                                                                                      
+ 374   3                                      //判断是否接触
+ 375   3                                      switch(Snake.Direction)
+ 376   3                                      {
+ 377   4                                              case 1 : {      if(Snake.Y[0] == 1 || Snake.Y[0] == 0 ||Kill_Self(-3,Snake.Y,Snake.X) == 0){GameOver();bre
+             -ak;}                                                        
+ 378   5                                                                      else{Buf.X_Move=0;Buf.Y_Move=-3;}       break;  }
+ 379   4                                              case 2 : {      if(Snake.Y[0] == 61|| Snake.Y[0] == 64 ||Kill_Self( 3,Snake.Y,Snake.X) == 0){GameOver();br
+             -eak;}                                                        
+ 380   5                                                                      else{Buf.X_Move=0;Buf.Y_Move=3;}        break;  }
+ 381   4                                              case 3 : {      if(Snake.X[0] == 1 || Snake.X[0] == 0||Kill_Self(-3,Snake.X,Snake.Y) == 0){GameOver();brea
+             -k;}                                        
+ 382   5                                                                      else{Buf.X_Move=-3;Buf.Y_Move=0;}       break;  }
+ 383   4                                              case 4 : {      if(Snake.X[0] == 79|| Snake.X[0] == 82||Kill_Self( 3,Snake.X,Snake.Y) == 0){GameOver();bre
+             -ak;}                                                                
+ 384   5                                                                      else {Buf.X_Move=3;Buf.Y_Move=0;}       break;  }
+ 385   4                                              default : break;
+ 386   4                                      }
+ 387   3                                      if(Snake.Blood == 0)
+ 388   3                                      {
+ 389   4                                                GameOver();
+ 390   4                                      }                                                                                               
+ 391   3                                      //判断是否吃到食物
+ 392   3                                      if(Snake.X[0]+Buf.X_Move == Food.X + 1  &&  Snake.Y[0]+Buf.Y_Move == Food.Y)
+ 393   3                                      {
+ 394   4                                              Food.Eat = 0;
+ 395   4                                              Snake.Node++;                                           
+ 396   4                                              for(i=Snake.Node - 1;i>0;i--)
+ 397   4                                              {
+ 398   5                                                      Snake.X[i] = Snake.X[i-1];
+ 399   5                                                      Snake.Y[i] = Snake.Y[i-1];
+ 400   5                                              }       
+ 401   4                                              Snake.X[0]+=Buf.X_Move;                                 
+ 402   4                                              Snake.Y[0]+=Buf.Y_Move;                                                                                                                                                 
+ 403   4                                              Snake.Score++;                                                                                          
+ 404   4                                      }
+ 405   3                                      else
+ 406   3                                      {
+ 407   4                                              Lcd_Rectangle(Snake.X[Snake.Node-1]-1,Snake.Y[Snake.Node-1]-1,Snake.X[Snake.Node-1]+1,Snake.Y[Snake.N
+             -ode-1]+1,1);
+ 408   4                                              for(i=Snake.Node - 1;i>0;i--)
+ 409   4                                              {
+ 410   5                                                      Snake.X[i] = Snake.X[i-1];
+ 411   5                                                      Snake.Y[i] = Snake.Y[i-1];
+ 412   5                                              }       
+ 413   4                                              Snake.X[0]+=Buf.X_Move;
+ 414   4                                              Snake.Y[0]+=Buf.Y_Move;                 
+ 415   4                                              Lcd_Rectangle(Snake.X[0]-1,Snake.Y[0]-1,Snake.X[0]+1,Snake.Y[0]+1,0);
+ 416   4                                  }
+ 417   3                                      if(Food.Eat == 0)
+ 418   3                                      {                
+ 419   4                                              Food.Eat = 1;
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 8   
+
+ 420   4                                              Food_Refresh();
+ 421   4                                      }
+ 422   3                                      //判断是否吃到补血剂
+ 423   3                                      for(i=0;i<=Life.Num;i++)
+ 424   3                                      {
+ 425   4                                              if(     Snake.X[0] == Life.X[i] && Snake.Y[0] == Life.Y[i])
+ 426   4                                              {
+ 427   5                                                      Snake.Blood++;
+ 428   5                                                      Flag_Medicine = 1;                                              
+ 429   5                                                      Lcd_PutPixel(Life.X[i],Life.Y[i],1);                                            
+ 430   5                                                      Life.X[i]=86;
+ 431   5                                              Life.Y[i]=80;                                                                                           
+ 432   5                                                      break;
+ 433   5                                              }
+ 434   4                                              else
+ 435   4                                              {
+ 436   5                                                  Flag_Medicine=0;
+ 437   5                                              }                                                                                                               
+ 438   4                                      }
+ 439   3                                                                      
+ 440   3                                      Game2_Start();                  
+ 441   3                                      Data_Refresh();                 
+ 442   3                              }                       
+ 443   2                              if(Flag_1s == 1)
+ 444   2                              {
+ 445   3                                      Flag_1s=0;
+ 446   3                                      if(Snake.Rank == 2 )
+ 447   3                                      {
+ 448   4                                      
+ 449   4                                              if(Barrier.Num<52)
+ 450   4                                              {                                                       
+ 451   5                                                      Barrier_Refresh();
+ 452   5                                              }
+ 453   4                                              if( Life.Num<=4 &&Barrier.Num %10==0)
+ 454   4                                              {
+ 455   5                                                      Life_Refresh(); 
+ 456   5                                              }                                                                               
+ 457   4                                      }
+ 458   3                              }                 
+ 459   2               }
+ 460   1      }
+ 461          
+ 462          void Start()
+ 463          {
+ 464   1               Lcd_Clear(1);//清屏
+ 465   1               Lcd_WriteStr(2,1,"开始游戏");
+ 466   1               DisPlay(114,52,Lin_Word);       
+ 467   1               Lcd_PutPixel(25,45,0);         
+ 468   1               Lcd_PutPixel(25,47,0);         
+ 469   1               DisPlayNum(18,40,A_Word);
+ 470   1               DisPlayNum(28,40,S_Word);
+ 471   1               DisPlayNum(34,40,T_Word);
+ 472   1               DisPlayNum(40,40,A_Word);
+ 473   1               DisPlayNum(46,40,R_Word);
+ 474   1               DisPlayNum(52,40,T_Word);
+ 475   1               
+ 476   1                DisPlayNum(72,40,B_Word);
+ 477   1                Lcd_PutPixel(79,45,0);        
+ 478   1               Lcd_PutPixel(79,47,0);
+ 479   1               DisPlayNum(82,40,B_Word);
+ 480   1               DisPlayNum(88,40,A_Word);
+ 481   1               DisPlayNum(96,40,C_Word);
+C51 COMPILER V9.00   SNAKE                                                                 09/23/2016 10:55:24 PAGE 9   
+
+ 482   1               DisPlayNum(102,40,K_Word);
+ 483   1      
+ 484   1      
+ 485   1               while(1)
+ 486   1               {
+ 487   2                        if(Key_Buffer == 6)
+ 488   2                        {
+ 489   3                                      Step=2;                                 
+ 490   3                                      break;
+ 491   3                        }
+ 492   2               }
+ 493   1               
+ 494   1      }
+ 495          
+ 496          
+ 497           void Snake_Game()
+ 498          {
+ 499   1              switch(Step)
+ 500   1              {
+ 501   2                       case 1 :Start(); 
+ 502   2                                      Lcd_Reset();
+ 503   2                                      Lcd_Clear(1);//清屏     
+ 504   2                                      Delaynms(1000);
+ 505   2                                      InitInterFace();
+ 506   2                                      InitRandom(TL0);
+ 507   2                                      break;
+ 508   2                       case 2 :Game1_Start();
+ 509   2                                      Lcd_Reset();
+ 510   2                                      Lcd_Clear(1);//清屏     
+ 511   2                                      Delaynms(1000); break;          
+ 512   2              }        
+ 513   1      }
+ 514          
+ 515          
+ 516          
+ 517          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2977    ----
+   CONSTANT SIZE    =    163    ----
+   XDATA SIZE       =    190      11
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

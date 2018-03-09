@@ -1,0 +1,89 @@
+C51 COMPILER V9.00   KEY                                                                   09/22/2016 20:02:19 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE KEY
+OBJECT MODULE PLACED IN ..\output\key.obj
+COMPILER INVOKED BY: C:\Keil_v4\C51\BIN\C51.EXE ..\src\key.c LARGE BROWSE INCDIR(..\src;..\..\9.22◊Ó÷’ÕÍ≥…;..\user;..\ob
+                    -ject;..\output) DEBUG OBJECTEXTEND PRINT(.\key.lst) OBJECT(..\output\key.obj)
+
+line level    source
+
+   1          #include <config.h>
+   2          
+   3          void Key_Init(void)
+   4          {
+   5   1              P1 = 0xFC;
+   6   1      }
+   7          
+   8          unsigned char  Key_Scan(void)
+   9          {
+  10   1                #if   KEY_LONG_EN > 0           
+                                unsigned char Temp,i; 
+                                Temp = P1;    
+                                for(i=2; i<8; i++)
+                                {
+                                       if((Temp & (1 << i)) == 0)
+                                       {
+                                              break;                  
+                                       }
+                                }
+                                Delaynms(100); 
+                                Temp = P1;
+                                if((Temp & (1 << i)) == 1)
+                                {
+                                        i=0;
+                                }
+                                return i-1;
+                       #endif
+  28   1      
+  29   1               #if KEY_LONG_EN <= 0 
+  30   1                        static unsigned char KeySample = 0;
+  31   1                        unsigned char Temp,i; 
+  32   1                        Temp = P1;
+  33   1                        for(i=2; i<9; i++)
+  34   1                        {
+  35   2                               if((Temp & (1 << i)) == 0)
+  36   2                               {
+  37   3                                       break;
+  38   3                               }
+  39   2                        }
+  40   1                        if(i == 8)
+  41   1                        {     
+  42   2                                      KeySample = 1;
+  43   2                              return 0; 
+  44   2                        }
+  45   1                        Delaynms(100); 
+  46   1                        Temp = P1;
+  47   1                        if((Temp & (1 << i)) == 1)
+  48   1                        {
+  49   2                                      i=0;
+  50   2                        }
+  51   1                        if(KeySample == 1)
+  52   1                        {
+  53   2                                 KeySample = 0;
+  54   2                                 return i-1;
+C51 COMPILER V9.00   KEY                                                                   09/22/2016 20:02:19 PAGE 2   
+
+  55   2                        }
+  56   1                        else
+  57   1                          return 0;
+  58   1                 #endif
+  59   1      
+  60   1      }
+  61          
+  62          
+  63          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    131    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      1       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

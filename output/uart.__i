@@ -1,0 +1,1 @@
+"..\src\uart.c" LARGE BROWSE INCDIR(..\..\9.15;..\src;..\user) DEBUG OBJECTEXTEND PRINT(.\uart.lst) OBJECT(..\output\uart.obj)

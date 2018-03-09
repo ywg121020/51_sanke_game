@@ -1,0 +1,161 @@
+C51 COMPILER V9.00   DISPLAY                                                               09/22/2016 20:02:17 PAGE 1   
+
+
+C51 COMPILER V9.00, COMPILATION OF MODULE DISPLAY
+OBJECT MODULE PLACED IN ..\output\display.obj
+COMPILER INVOKED BY: C:\Keil_v4\C51\BIN\C51.EXE ..\user\display.c LARGE BROWSE INCDIR(..\src;..\..\9.22最终完成;..\user;
+                    -..\object;..\output) DEBUG OBJECTEXTEND PRINT(.\display.lst) OBJECT(..\output\display.obj)
+
+line level    source
+
+   1          #include <config.h>
+   2          
+   3          uchar code Fen_Word[]={0x88,0x88,0x04,0x04,0x02,0xFD,0x10,0x10,0x08,0x08,0x04,0xE2,0x00,0x00,0x01,0x01,0x0
+             -2,0x05,0x01,0x01,0x01,0x01,0x01,0x00};/*"分",0*/
+   4          uchar code Shu_Word[]={0x10,0x54,0x10,0x7E,0x98,0x34,0x52,0x08,0x3E,0x24,0x18,0xA6,0x01,0x01,0x01,0x0F,0x0
+             -4,0x05,0x05,0x05,0x05,0x02,0x05,0x08};/*"数",1*/
+   5          uchar code Nan_Word[]={0x40,0x4F,0xE8,0x29,0x3A,0xEA,0x24,0xE4,0x2A,0x2A,0xE9,0x20,0x01,0x02,0x07,0x01,0x0
+             -1,0x07,0x01,0x07,0x01,0x01,0x07,0x00};/*"难",0*/
+   6          uchar code Du_Word[]={0x80,0xFC,0x24,0xFC,0x24,0xE4,0x04,0xF4,0x24,0x44,0x84,0x72,0x00,0x0F,0x02,0x0F,0x02
+             -,0x03,0x00,0x07,0x04,0x02,0x01,0x0E};/*"度",1*/
+   7          uchar code Guan_Word[]={0x04,0x88,0x00,0xFE,0x20,0x20,0xFF,0x20,0x50,0x88,0x04,0x03,0x01,0x00,0x00,0x03,0x
+             -00,0x00,0x07,0x00,0x00,0x00,0x01,0x06};/*"关",0*/
+   8          uchar code Ka_Word[]={0x10,0x10,0xF0,0x10,0x10,0xFF,0x10,0x70,0x90,0x10,0x10,0x10,0x00,0x00,0x03,0x00,0x00
+             -,0x07,0x00,0x00,0x01,0x02,0x00,0x00};/*"卡",0*/
+   9          uchar code Xue_Word[]={0x10,0x10,0x08,0xFE,0x52,0x52,0x52,0x52,0x52,0x52,0x52,0xFF,0x00,0x00,0x00,0x03,0x0
+             -2,0x02,0x02,0x02,0x02,0x02,0x02,0x07};/*"血",0*/
+  10          uchar code Liang_Word[]={0xFE,0x22,0x42,0xFF,0x22,0xFE,0x22,0xFE,0x20,0xFE,0x20,0xFF,0x03,0x02,0x02,0x07,0
+             -x02,0x03,0x02,0x03,0x00,0x03,0x00,0x07};/*"量",0*/
+  11          uchar code Num0[8]={0x0E,0x11,0x11,0x11,0x11,0x11,0x11,0x0E};/*"0"*/
+  12          uchar code Num1[8]={0x04,0x06,0x04,0x04,0x04,0x04,0x04,0x0E};/*"1"*/
+  13          uchar code Num2[8]={0x0E,0x11,0x11,0x08,0x04,0x02,0x01,0x1F};/*"2"*/
+  14          uchar code Num3[8]={0x0E,0x11,0x10,0x0C,0x10,0x10,0x11,0x0E};/*"3"*/
+  15          uchar code Num4[8]={0x08,0x0C,0x0C,0x0A,0x09,0x1F,0x08,0x1C};/*"4"*/
+  16          uchar code Num5[8]={0x1F,0x01,0x01,0x0F,0x11,0x10,0x11,0x0E};/*"5"*/
+  17          uchar code Num6[8]={0x0C,0x12,0x01,0x0D,0x13,0x11,0x11,0x0E};/*"6"*/
+  18          uchar code Num7[8]={0x1E,0x10,0x08,0x08,0x04,0x04,0x04,0x04};/*"7"*/
+  19          uchar code Num8[8]={0x0E,0x11,0x11,0x0E,0x11,0x11,0x11,0x0E};/*"8"*/
+  20          uchar code Num9[8]={0x0E,0x11,0x11,0x19,0x16,0x10,0x09,0x06};/*"9"*/
+  21          
+  22          void DisPlayNum(uchar x2,uchar y2,uchar temp[])
+  23          {
+  24   1               unsigned i,j;
+  25   1               for(i=0;i<8;i++)
+  26   1               {
+  27   2                       for(j=0;j<6;j++)
+  28   2                       {
+  29   3                              Lcd_PutPixel(x2+j,y2+i,~(temp[i] & (1<< j))>>j);
+  30   3                       }
+  31   2               }
+  32   1      
+  33   1      }
+  34          
+  35          void ChooseNum(uchar x1,uchar y1,uchar n)
+  36          {
+  37   1              switch(n)
+  38   1              {
+  39   2                      case 0 :  DisPlayNum(x1,y1,Num0); break;
+  40   2                      case 1 :  DisPlayNum(x1,y1,Num1); break;
+  41   2                      case 2 :  DisPlayNum(x1,y1,Num2); break;
+  42   2                      case 3 :  DisPlayNum(x1,y1,Num3); break;
+  43   2                      case 4 :  DisPlayNum(x1,y1,Num4); break;
+  44   2                      case 5 :  DisPlayNum(x1,y1,Num5); break;
+  45   2                      case 6 :  DisPlayNum(x1,y1,Num6); break;
+  46   2                      case 7 :  DisPlayNum(x1,y1,Num7); break;
+C51 COMPILER V9.00   DISPLAY                                                               09/22/2016 20:02:17 PAGE 2   
+
+  47   2                      case 8 :  DisPlayNum(x1,y1,Num8); break;
+  48   2                      case 9 :  DisPlayNum(x1,y1,Num9); break;
+  49   2                      default:    break;  
+  50   2              }
+  51   1      }
+  52          void DisPlayNums(uchar x,uchar y,uchar numbers)
+  53          {
+  54   1              uchar num;
+  55   1              if(numbers>=100)
+  56   1              {
+  57   2                      num=numbers/100;
+  58   2                      ChooseNum(x,y,num);
+  59   2                      numbers=numbers%100;
+  60   2              }
+  61   1              if(numbers<100&&numbers>=10)
+  62   1              {
+  63   2                      num=numbers/10;
+  64   2                      ChooseNum(x+6,y,num);
+  65   2                      numbers=numbers%10;
+  66   2              }
+  67   1              if(numbers<10)
+  68   1              {
+  69   2                      ChooseNum(x+12,y,numbers);
+  70   2              }
+  71   1      }
+  72          /***************************************
+  73          显示一个取模的字 12*12
+  74          ***************************************/
+  75          void DisPlay(uchar x,uchar y,uchar temp[])
+  76          {
+  77   1               uchar i,j;
+  78   1               for(i =0 ;i<24;i++)
+  79   1               {
+  80   2                        if(i<12)
+  81   2                        {
+  82   3                                      for(j=0; j<8;j++)
+  83   3                                      {
+  84   4                                              Lcd_PutPixel(x+j,y+i,~(temp[i] & (1<< j))>>j);
+  85   4                                      }
+  86   3                    }                                                            
+  87   2                        else
+  88   2                        {
+  89   3                                      for(j=0 ;j<8 ;j++)
+  90   3                                      {
+  91   4                                                      Lcd_PutPixel(x+j+8,y+i-12,~(temp[i] & (1<< j))>>j);
+  92   4                                      }
+  93   3                        }
+  94   2              }
+  95   1      }
+  96          
+  97          void InitInterFace(void)
+  98          {
+  99   1                      Lcd_VertLine(81,0,64,0);
+ 100   1                      Lcd_HoriLine(0,63,128,0);
+ 101   1                      DisPlay(83,1,Fen_Word);
+ 102   1                      DisPlay(95,1,Shu_Word);
+ 103   1                      Lcd_PutPixel(108,10,0);
+ 104   1                  Lcd_PutPixel(108,12,0);
+ 105   1                              
+ 106   1                      DisPlay(83,14,Guan_Word);
+ 107   1                      DisPlay(95,14,Ka_Word);
+ 108   1                      Lcd_PutPixel(108,23,0);
+C51 COMPILER V9.00   DISPLAY                                                               09/22/2016 20:02:17 PAGE 3   
+
+ 109   1                  Lcd_PutPixel(108,25,0);
+ 110   1      
+ 111   1                      DisPlay(83,27,Nan_Word);
+ 112   1                      DisPlay(95,27,Du_Word);
+ 113   1                      Lcd_PutPixel(108,36,0);
+ 114   1                  Lcd_PutPixel(108,38,0);
+ 115   1      
+ 116   1                      DisPlay(83,40,Xue_Word);
+ 117   1                      DisPlay(95,40,Liang_Word);
+ 118   1                      Lcd_PutPixel(108,49,0);
+ 119   1                  Lcd_PutPixel(108,51,0);
+ 120   1      
+ 121   1      
+ 122   1      }
+ 123          
+ 124          
+ 125          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1002    ----
+   CONSTANT SIZE    =    272    ----
+   XDATA SIZE       =   ----      22
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
